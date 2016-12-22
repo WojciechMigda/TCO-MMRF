@@ -36,6 +36,7 @@
 #include <sstream>
 #include <type_traits>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 namespace num
@@ -277,7 +278,8 @@ ones(shape_type shape)
 template<typename _Type = double>
 struct loadtxtCfg
 {
-    typedef std::map<size_type, _Type(*)(const char *)> converters_type;
+    enum { GLOBAL_CONVERTER = std::numeric_limits<size_type>::max()};
+    typedef std::unordered_map<size_type, _Type(*)(const char *)> converters_type;
 
     loadtxtCfg()
     :
@@ -360,6 +362,7 @@ loadtxt(
     loadtxtCfg<_Type> && cfg
 )
 {
+    constexpr auto GLOBAL_CONVERTER = loadtxtCfg<_Type>::GLOBAL_CONVERTER;
     typedef _Type value_type;
     const bool skip_empty = false;
 
@@ -389,19 +392,31 @@ loadtxt(
 
     array2d<_Type> result = zeros<value_type>(shape_type(NROWS, NCOLS));
 
+    auto converters = cfg.converters();
+    auto delimiter = cfg.delimiter();
+    const bool has_global_converter = converters.count(GLOBAL_CONVERTER) != 0;
+    const auto global_converter = has_global_converter ? converters.at(GLOBAL_CONVERTER) : [](const char *) -> _Type { return _Type{}; };
+
     for (size_type ridx{0}; ridx < NROWS; ++ridx)
     {
         std::valarray<value_type> row(NCOLS);
         std::stringstream ss(txt[ridx + cfg.skip_header()]);
         std::string item;
 
-        for (size_type cidx{0}; cidx < NCOLS && std::getline(ss, item, cfg.delimiter()); ++cidx) // TODO
+        for (size_type cidx{0}; cidx < NCOLS && std::getline(ss, item, delimiter); ++cidx) // TODO
         {
-            if (cfg.converters().find(cidx) != cfg.converters().cend())
+            if (converters.count(cidx) != 0)
             {
                 const auto last_alpha = item.find_last_not_of("\r\n");
                 item.resize(last_alpha + 1);
-                row[cidx] = cfg.converters().at(cidx)(item.c_str());
+                row[cidx] = converters.at(cidx)(item.c_str());
+            }
+            else if (has_global_converter)
+            {
+                // extension from numpy.loadtxt
+                const auto last_alpha = item.find_last_not_of("\r\n");
+                item.resize(last_alpha + 1);
+                row[cidx] = global_converter(item.c_str());
             }
             else if (std::is_convertible<value_type, long double>::value)
             {
