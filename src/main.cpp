@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 
         assert(verify(y_hat, NROWS));
         const auto SCORE = score(y_hat, test_data[PO_TIMES]);
-        std::cout << "[main] SCORE[" << fold << "]: " << SCORE << std::endl;
+        std::cout << "[main] SCORE[" << fold + 1 << "]: " << SCORE << std::endl;
 
         scores.push_back(SCORE);
     }
