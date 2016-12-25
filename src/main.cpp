@@ -158,6 +158,67 @@ enum CHUNK_ID
     PO_TIMES = 3
 };
 
+std::vector<int> shuffled_fold_indices(size_type const NROWS, int const SEED)
+{
+    std::vector<int> fold_indices(NROWS);
+    std::iota(fold_indices.begin(), fold_indices.end(), 0);
+    std::mt19937 g(SEED);
+    std::shuffle(fold_indices.begin(), fold_indices.end(), g);
+
+    return fold_indices;
+}
+
+std::vector<size_type> linspace(size_type MAX, size_type N)
+{
+    // numpy.linspace(0, MAX, N, endpoint=True)
+    std::vector<size_type> ls(N);
+
+    std::iota(ls.begin(), ls.end(), 0);
+    std::transform(ls.begin(), ls.end(), ls.begin(), [&N, &MAX](size_type v){ return std::round((double)v * MAX / (N - 1)); });
+    ls.back() = MAX;
+    return ls;
+}
+
+std::vector<int> stratified_fold_indices(std::vector<std::string> const & vstr, size_type const NFOLDS, int const SEED)
+{
+    auto const NROWS = vstr.size();
+    std::vector<int> prog; // samples with MM progress
+    std::vector<int> noprog; // samples without MM progress
+
+    for (size_type ix{0}; ix < NROWS; ++ix)
+    {
+        if (vstr[ix].find(',') < vstr[ix].find_first_of("0123456789"))
+        {
+            noprog.push_back(ix);
+        }
+        else
+        {
+            prog.push_back(ix);
+        }
+    }
+
+    std::mt19937 g(SEED);
+    std::shuffle(noprog.begin(), noprog.end(), g);
+    std::shuffle(prog.begin(), prog.end(), g);
+
+
+    auto all_ls = linspace(NROWS, NFOLDS + 1);
+    auto prog_ls = linspace(prog.size(), NFOLDS + 1);
+    decltype(prog_ls) noprog_ls(prog_ls.size());
+    std::transform(all_ls.cbegin(), all_ls.cend(), prog_ls.cbegin(), noprog_ls.begin(),
+        [](decltype(prog_ls)::value_type all, decltype(prog_ls)::value_type prog){ return all - prog;});
+
+    std::vector<int> fold_indices;
+    for (size_type ix {0}; ix < NFOLDS; ++ix)
+    {
+        std::copy(noprog.begin() + noprog_ls[ix], noprog.begin() + noprog_ls[ix + 1], std::back_inserter(fold_indices));
+        std::copy(prog.begin() + prog_ls[ix], prog.begin() + prog_ls[ix + 1], std::back_inserter(fold_indices));
+    }
+
+    return fold_indices;
+}
+
+
 int main(int argc, char **argv)
 {
     int const SEED = (argc == 2 ? std::atoi(argv[1]) : 1);
@@ -191,21 +252,16 @@ int main(int argc, char **argv)
 
     ////////////////////////////////////////////////////////////////////////////
 
-    constexpr int NFOLDS{5};
+    constexpr int NFOLDS{10};
 
     MMRF solver;
 
-    std::vector<float> CVscores(NFOLDS);
+    //std::vector<float> CVscores(NFOLDS);
 
-    std::vector<int> fold_indices(NROWS);
-    std::iota(fold_indices.begin(), fold_indices.end(), 0);
-    std::mt19937 g(SEED);
-    std::shuffle(fold_indices.begin(), fold_indices.end(), g);
+    //auto const fold_indices = shuffled_fold_indices(NROWS, SEED);
+    auto const fold_indices = stratified_fold_indices(vstr[PO_TIMES], NFOLDS, SEED);
 
-    std::array<size_type, NFOLDS + 1> linspace;
-    std::iota(linspace.begin(), linspace.end(), 0);
-    std::transform(linspace.begin(), linspace.end(), linspace.begin(), [&NFOLDS, &NROWS](size_type v){ return std::round((double)v * NROWS / NFOLDS); });
-    linspace.back() = NROWS;
+    const auto ls = linspace(NROWS, NFOLDS + 1);
 
     std::vector<double> scores;
 
@@ -219,7 +275,7 @@ int main(int argc, char **argv)
         for (size_type ix{0}; ix < NROWS; ++ix)
         {
             auto rix = fold_indices[ix];
-            if (ix >= linspace[fold] && ix < linspace[fold + 1])
+            if (ix >= ls[fold] && ix < ls[fold + 1])
             {
                 test_data[AVERAGES].push_back(vstr[AVERAGES][rix]);
                 test_data[DIFFERENCES].push_back(vstr[DIFFERENCES][rix]);
@@ -242,6 +298,11 @@ int main(int argc, char **argv)
             MMRF::TEST_HOME,
             train_data[AVERAGES], train_data[DIFFERENCES], train_data[MUTATIONS], train_data[PO_TIMES]);
         const auto y_hat = solver.testingData(test_data[AVERAGES], test_data[DIFFERENCES], test_data[MUTATIONS]);
+        std::cout << "[main] --- y_hat\n";
+        for (size_type ix{0}; ix < y_hat.size(); ++ix)
+        {
+            std::cout << y_hat[ix] << ", " << test_data[PO_TIMES][ix] << std::endl;
+        }
 
         assert(verify(y_hat, NROWS));
         const auto SCORE = score(y_hat, test_data[PO_TIMES]);
