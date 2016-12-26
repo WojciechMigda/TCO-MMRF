@@ -1,6 +1,6 @@
 #define DMLC_ENABLE_STD_THREAD 0
 
-#pragma GCC optimize ( "-Os" )
+#pragma GCC optimize ( "-O2" )
 
 #include "../xgboost/src/c_api/c_api.cc"
 #include "../xgboost/src/data/simple_csr_source.cc"
