@@ -72,17 +72,17 @@ parse_options(int argc, char **argv)
     }
     catch (po::error & ex)
     {
-        std::cout << ex.what() << std::endl;
+        std::cerr << ex.what() << std::endl;
     }
     catch (boost::bad_any_cast & ex)
     {
-        std::cout << ex.what() << std::endl;
+        std::cerr << ex.what() << std::endl;
     }
     po::notify(args);
 
     if (args.count("help"))
     {
-        std::cout << desc << "\n";
+        std::cerr << desc << "\n";
         std::exit(1);
     }
 
@@ -184,12 +184,12 @@ bool verify(const std::vector<int> & y_hat, const int N)
     {
         if (ix < 1 || ix > N)
         {
-            std::cout << "[main] y_hat out of range: " << ix << std::endl;
+            std::cerr << "[main] y_hat out of range: " << ix << std::endl;
             return false;
         }
         if (occurences.count(ix) != 0)
         {
-            std::cout << "[main] duplicated y_hat: " << ix << std::endl;
+            std::cerr << "[main] duplicated y_hat: " << ix << std::endl;
             return false;
         }
         occurences.insert(ix);
@@ -268,14 +268,14 @@ build_xgb_params(boost::program_options::variables_map const & args)
 
     if (args.at("xgboost_params").as<bool>())
     {
-        ret.insert({"n_estimators", std::to_string(args.at("n_estimators").as<int>())});
-        ret.insert({"colsample_bytree", std::to_string(args.at("colsample_bytree").as<float>())});
-        ret.insert({"scale_pos_weight", std::to_string(args.at("scale_pos_weight").as<float>())});
-        ret.insert({"learning_rate", std::to_string(args.at("learning_rate").as<float>())});
-        ret.insert({"subsample", std::to_string(args.at("subsample").as<float>())});
-        ret.insert({"min_child_weight", std::to_string(args.at("min_child_weight").as<float>())});
-        ret.insert({"num_pairsample", std::to_string(args.at("num_pairsample").as<int>())});
-        ret.insert({"max_depth", std::to_string(args.at("max_depth").as<int>())});
+        ret.emplace("n_estimators", std::to_string(args.at("n_estimators").as<int>()));
+        ret.emplace("colsample_bytree", std::to_string(args.at("colsample_bytree").as<float>()));
+        ret.emplace("scale_pos_weight", std::to_string(args.at("scale_pos_weight").as<float>()));
+        ret.emplace("learning_rate", std::to_string(args.at("learning_rate").as<float>()));
+        ret.emplace("subsample", std::to_string(args.at("subsample").as<float>()));
+        ret.emplace("min_child_weight", std::to_string(args.at("min_child_weight").as<float>()));
+        ret.emplace("num_pairsample", std::to_string(args.at("num_pairsample").as<int>()));
+        ret.emplace("max_depth", std::to_string(args.at("max_depth").as<int>()));
     }
 
     return ret;
@@ -305,11 +305,11 @@ int main(int argc, char **argv)
     const char MUT_FNAME[] = "../data/mutations_example.csv";
     const char TRUTH_FNAME[] = "../data/groundtruth_example.csv";
 
-    std::cout << "[main] SEED: " << SEED << std::endl;
-    std::cout << "[main] Copynumber CSV: " << CPNUM_FNAME << std::endl;
-    std::cout << "[main] Expressions CSV: " << EXPR_FNAME << std::endl;
-    std::cout << "[main] Mutations CSV: " << MUT_FNAME << std::endl;
-    std::cout << "[main] Ground Truth CSV: " << TRUTH_FNAME << std::endl;
+    std::cerr << "[main] SEED: " << SEED << std::endl;
+    std::cerr << "[main] Copynumber CSV: " << CPNUM_FNAME << std::endl;
+    std::cerr << "[main] Expressions CSV: " << EXPR_FNAME << std::endl;
+    std::cerr << "[main] Mutations CSV: " << MUT_FNAME << std::endl;
+    std::cerr << "[main] Ground Truth CSV: " << TRUTH_FNAME << std::endl;
 
     std::array<std::vector<std::string>, 4> vstr;
     vstr[AVERAGES] = read_file(EXPR_FNAME);
@@ -317,7 +317,7 @@ int main(int argc, char **argv)
     vstr[MUTATIONS] = read_file(MUT_FNAME);
     vstr[PO_TIMES] = read_file(TRUTH_FNAME);
 
-    std::cout << "[main] Read " << vstr[PO_TIMES].size() << " lines\n";
+    std::cerr << "[main] Read " << vstr[PO_TIMES].size() << " lines\n";
 
     // extract first row with feature names
     std::array<std::string, 4> headers;
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
     vstr[PO_TIMES].erase(vstr[PO_TIMES].begin());
 
     size_type const NROWS = vstr[PO_TIMES].size();
-    std::cout << "[main] Input dataset has " << NROWS << " rows\n";
+    std::cerr << "[main] Input dataset has " << NROWS << " rows\n";
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -391,22 +391,23 @@ int main(int argc, char **argv)
             MMRF::TEST_HOME,
             train_data[AVERAGES], train_data[DIFFERENCES], train_data[MUTATIONS], train_data[PO_TIMES]);
         const auto y_hat = solver.testingData(test_data[AVERAGES], test_data[DIFFERENCES], test_data[MUTATIONS]);
-        std::cout << "[main] --- y_hat\n";
+        std::cerr << "[main] --- y_hat\n";
         for (size_type ix{0}; ix < y_hat.size(); ++ix)
         {
-            std::cout << y_hat[ix] << ", " << test_data[PO_TIMES][ix] << std::endl;
+            std::cerr << y_hat[ix] << ", " << test_data[PO_TIMES][ix] << std::endl;
         }
 
         assert(verify(y_hat, NROWS));
         const auto SCORE = score(y_hat, test_data[PO_TIMES]);
-        std::cout << "[main] SCORE[" << fold + 1 << "]: " << SCORE << std::endl;
+        std::cerr << "[main] SCORE[" << fold + 1 << "]: " << SCORE << std::endl;
 
         scores.push_back(SCORE);
     }
 
     const auto SCORE = std::accumulate(scores.cbegin(), scores.cend(), 0.) / scores.size();
 
-    std::cout << "\n[main] Final SCORE: " << 1e6 * std::max(SCORE, 0.) << std::endl;
+    std::cerr << "\n[main] Final SCORE: " << 1e6 * std::max(SCORE, 0.) << std::endl;
+    std::cout << 1e6 * std::max(SCORE, 0.) << std::endl;
 
     return 0;
 }
