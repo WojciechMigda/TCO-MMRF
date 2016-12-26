@@ -27,6 +27,7 @@
 
 #include "num.hpp"
 #include "array2d.hpp"
+#include "param_store.hpp"
 
 #include "xgboost/c_api.h"
 
@@ -38,12 +39,18 @@
 #include <cctype>
 #include <cmath>
 #include <cstring>
+#include <memory>
+#include <iterator>
 
 
 using real_type = float;
 using array_type = num::array2d<real_type>;
 
 using size_type = std::size_t;
+
+constexpr float MISSING{NAN};
+constexpr float XGB_MISSING{NAN};
+
 
 /*
  * Wrapper which returns DMatrixHandle directly and not through out param
@@ -72,6 +79,82 @@ BoosterHandle XGBoosterCreate(const DMatrixHandle dmats[], bst_ulong len)
 
     return booster;
 }
+
+namespace XGB
+{
+
+template<typename _StopCondition>
+std::unique_ptr<void, int (*)(BoosterHandle)>
+fit(const array_type & train_data,
+    const std::vector<float> & train_y,
+    const std::map<const std::string, const std::string> & params,
+    _StopCondition stop_condition)
+{
+    // prepare placeholder for raw matrix later used by xgboost
+    std::vector<float> train_vec = train_data.tovector();
+    std::cerr << "[MMRF] train_vec size: " << train_vec.size() << std::endl;
+//    assert(std::none_of(train_vec.cbegin(), train_vec.cend(), [](float x){return std::isnan(x);}));
+
+    std::unique_ptr<void, int (*)(DMatrixHandle)> tr_dmat(
+        XGDMatrixCreateFromMat(
+            train_vec.data(),
+            train_data.shape().first,
+            train_data.shape().second, XGB_MISSING),
+        XGDMatrixFree);
+
+    // attach response vector to tr_dmat
+    XGDMatrixSetFloatInfo(tr_dmat.get(), "label", train_y.data(), train_y.size());
+
+    const DMatrixHandle cache[] = {tr_dmat.get()};
+
+    // create Booster with attached tr_dmat
+    std::unique_ptr<void, int (*)(BoosterHandle)> booster(
+            XGBoosterCreate(cache, 1UL),
+            XGBoosterFree);
+
+    for (const auto & kv : params)
+    {
+        std::cerr << kv.first << " => " << kv.second << std::endl;
+        XGBoosterSetParam(booster.get(), kv.first.c_str(), kv.second.c_str());
+    }
+
+
+    for (int iter{0}; stop_condition() == false; ++iter)
+    {
+        XGBoosterUpdateOneIter(booster.get(), iter, tr_dmat.get());
+    }
+
+    return booster;
+}
+
+
+std::vector<float>
+predict(
+    BoosterHandle booster,
+    const array_type & test_data)
+{
+    std::vector<float> test_vec = test_data.tovector();
+    std::cerr << "test_vec size: " << test_vec.size() << std::endl;
+
+    std::unique_ptr<void, int (*)(DMatrixHandle)> te_dmat(
+        XGDMatrixCreateFromMat(
+            test_vec.data(),
+            test_data.shape().first,
+            test_data.shape().second, XGB_MISSING),
+        XGDMatrixFree);
+
+    bst_ulong y_hat_len{0};
+    const float * y_hat_proba{nullptr};
+    XGBoosterPredict(booster, te_dmat.get(), 0, 0, &y_hat_len, &y_hat_proba);
+    std::cerr << "Got y_hat_proba of length " << y_hat_len << std::endl;
+
+    std::vector<float> y_hat(y_hat_proba, y_hat_proba + y_hat_len);
+
+    return y_hat;
+}
+
+}
+
 
 /*
  * Competition mandated class
@@ -111,6 +194,7 @@ struct MMRF
         std::vector<std::string> && mutation);
 
 
+    enum test_type m_test_type;
     std::vector<std::string> m_expr_avg;
     std::vector<std::string> m_expr_diff;
     std::vector<std::string> m_mutation;
@@ -163,6 +247,7 @@ int MMRF::trainingData(
     std::vector<std::string> && mutation,
     std::vector<std::string> && prog_obs_time)
 {
+    m_test_type = static_cast<enum test_type>(test_type);
     m_expr_avg = std::move(expr_avg);
     m_expr_diff = std::move(expr_diff);
     m_mutation = std::move(mutation);
@@ -170,9 +255,6 @@ int MMRF::trainingData(
 
     return 0;
 }
-
-constexpr float MISSING{NAN};
-constexpr float XGB_MISSING{NAN};
 
 std::vector<std::string>
 merge_chunks(std::vector<std::string> && avg, std::vector<std::string> && diff, std::vector<std::string> && mut)
@@ -231,7 +313,7 @@ std::vector<float> encode_response(std::vector<std::string> && vstr)
     }
 
     std::transform(po_times.cbegin(), po_times.cend(), resp.begin(),
-        [](const pair_type & pair)
+        [](const pair_type & pair) -> float
         {
             union
             {
@@ -245,10 +327,124 @@ std::vector<float> encode_response(std::vector<std::string> && vstr)
             pack.pair[0] = pair.first;
             pack.pair[1] = pair.second;
 
-            return pack.f;
+            //return pack.f;
+#warning TODO // TODO, just prognosis times for the prototype
+            if (pair.first != -1)
+            {
+                return -(2 * pair.first);
+            }
+//            else if (pair.second != -1)
+//            {
+//                return -(2 * pair.second + 1);
+//            }
+            else
+            {
+//                return +1;
+                return -2000;
+            }
         });
 
     return resp;
+}
+
+
+template<typename Iterator>
+std::vector<size_type>
+run_rank_estimators(
+    const Iterator begin,
+    const Iterator end,
+    const long int time0,
+    const long int MAX_TIME,
+    const array_type & train_data,
+    const std::vector<float> & train_y,
+    const array_type & test_data)
+{
+    constexpr int   TIME_MARGIN{10};
+    const int       MAX_TIMESTAMP = time0 + MAX_TIME - TIME_MARGIN;
+
+    std::cerr << std::endl << "[MMRF] Training " << std::distance(begin, end) << " estimator(s)" << std::endl;
+    std::cerr << "[MMRF] Total time limit: " << MAX_TIME << " secs" << std::endl;
+
+    // collection of probabilities predicted by each estimator
+    std::vector<std::vector<float>> y_hat_proba_set;
+
+    for (auto it = begin; it != end; ++it)
+    {
+        const auto & PARAMS_p = *it;
+
+        const int MAX_ITER = std::stoi(PARAMS_p->at("n_estimators"));
+        int iter{0};
+
+        auto booster = XGB::fit(train_data, train_y, *PARAMS_p,
+            [&iter, MAX_ITER, MAX_TIMESTAMP]() -> bool
+            {
+                const bool running = (iter < MAX_ITER) && (timestamp() < MAX_TIMESTAMP);
+                ++iter;
+                return running == false;
+            }
+        );
+
+        if (iter <= MAX_ITER)
+        {
+            // time exceeded
+            std::cerr << "[MMRF] Exceeded allocated time limit after iteration " << iter << " of " << MAX_ITER << " for estimator [" << y_hat_proba_set.size() + 1 << "]" << std::endl;
+
+            // but we'll make the prediction anyway if it's our first estimator :)
+            if (y_hat_proba_set.size() == 0)
+            {
+                y_hat_proba_set.push_back(XGB::predict(booster.get(), test_data));
+            }
+            break;
+        }
+
+        auto proba = XGB::predict(booster.get(), test_data);
+
+        y_hat_proba_set.push_back(proba);
+
+        std::cerr << "[MMRF] Elapsed time: " << timestamp() - time0 << std::endl;
+    }
+
+    // array of propabilities accumulated from completed estimators
+    std::vector<float> y_hat_proba_cumm(test_data.shape().first, 0.);
+
+    for (size_type idx{0}; idx < y_hat_proba_set.size(); ++idx)
+    {
+        std::transform(y_hat_proba_set[idx].cbegin(), y_hat_proba_set[idx].cend(), y_hat_proba_cumm.begin(),
+            y_hat_proba_cumm.begin(),
+            [](const float x, const float a)
+            {
+                return a + x;
+            });
+    }
+
+    // zip accumulated probabilities with rank indices
+    std::vector<std::pair<float, size_type>> zipped;
+    for (size_type ix{0}; ix < y_hat_proba_cumm.size(); ++ix)
+    {
+        zipped.emplace_back(y_hat_proba_cumm[ix], ix + 1);
+    }
+    qsort(zipped.data(), zipped.size(), sizeof (zipped.front()),
+        [](const void * avp, const void * bvp)
+        {
+            auto ap = static_cast<const std::pair<float, size_type> *>(avp);
+            auto bp = static_cast<const std::pair<float, size_type> *>(bvp);
+
+            // descending order
+            //return (ap->first > bp->first) - (ap->first < bp->first);
+            // ascending order
+            return (ap->first < bp->first) - (ap->first > bp->first);
+        });
+
+    // unzip index into y_hat
+    std::vector<size_type> y_hat(test_data.shape().first);
+
+    std::transform(zipped.cbegin(), zipped.cend(), y_hat.begin(),
+        [](const std::pair<float, size_type> & p)
+        {
+            return p.second;
+        });
+
+    return y_hat;
 }
 
 
@@ -262,6 +458,10 @@ std::vector<int> MMRF::testingData(
     // merge chunks
     auto train_vstr = merge_chunks(std::move(m_expr_avg), std::move(m_expr_diff), std::move(m_mutation));
     auto test_vstr = merge_chunks(std::move(i_expr_avg), std::move(i_expr_diff), std::move(i_mutation));
+
+    m_prog_obs_time.erase(m_prog_obs_time.begin());
+    train_vstr.erase(train_vstr.begin());
+    test_vstr.erase(test_vstr.begin());
 
     using loadtxtCfg = num::loadtxtCfg<real_type>;
     const array_type i_train_data =
@@ -284,9 +484,9 @@ std::vector<int> MMRF::testingData(
             )
         );
 
-    std::cout << "[MMRF] Train data shape " << i_train_data.shape() << std::endl;
-    std::cout << "[MMRF] Test data shape "<< i_test_data.shape() << std::endl;
-    std::cout << "[MMRF] It took " << timestamp() - time0 << " secs to parse text\n";
+    std::cerr << "[MMRF] Train data shape " << i_train_data.shape() << std::endl;
+    std::cerr << "[MMRF] Test data shape "<< i_test_data.shape() << std::endl;
+    std::cerr << "[MMRF] It took " << timestamp() - time0 << " secs to parse text\n";
 
     std::vector<float> train_y = encode_response(std::move(m_prog_obs_time));
 
@@ -294,18 +494,25 @@ std::vector<int> MMRF::testingData(
     array_type train_data = std::move(i_train_data);
     array_type test_data = std::move(i_test_data);
 
-//    const std::map<const std::string, const std::string> * PARAMS_SET[] = {/*&params::no::prov47*/};
-//
-//    const auto y_hat = run_rank_estimators(
-//        std::begin(PARAMS_SET), std::end(PARAMS_SET),
-//            time0, train_data, train_y, test_data);
+    const long int MAX_TIMES[] =
+        {
+            [MMRF::TEST_EXAMPLE] = 2 * 60,
+            [MMRF::TEST_PROVISIONAL] = 3 * 60,
+            [MMRF::TEST_SYSTEM] = 4 * 60,
+            [MMRF::TEST_HOME] = 4 * 60,
+        };
+
+    const std::map<const std::string, const std::string> * PARAMS_SET[] = {&params::sub01};
+
+    const auto y_hat = run_rank_estimators(
+        std::begin(PARAMS_SET), std::end(PARAMS_SET),
+            time0, MAX_TIMES[m_test_type], train_data, train_y, test_data);
 
     ////////////////////////////////////////////////////////////////////////////
 
     std::vector<int> ranks;
 
-    ranks.resize(test_vstr.size());
-    std::iota(ranks.begin(), ranks.end(), 1);
+    std::transform(y_hat.cbegin(), y_hat.cend(), std::back_inserter(ranks), [](const size_type sz) -> int { return sz; });
 
     return ranks;
 }
