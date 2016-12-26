@@ -169,6 +169,13 @@ struct MMRF
         TEST_HOME = 3
     };
 
+    MMRF() = default;
+
+    explicit MMRF(std::map<const std::string, const std::string> && xgb_params)
+    {
+        m_xgb_params = std::move(xgb_params);
+    }
+
     int trainingData(
         int test_type,
         std::vector<std::string> & expr_avg,
@@ -199,6 +206,7 @@ struct MMRF
     std::vector<std::string> m_expr_diff;
     std::vector<std::string> m_mutation;
     std::vector<std::string> m_prog_obs_time;
+    std::map<const std::string, const std::string> m_xgb_params;
 };
 
 #include <sys/time.h>
@@ -502,11 +510,14 @@ std::vector<int> MMRF::testingData(
             [MMRF::TEST_HOME] = 4 * 60,
         };
 
-    const std::map<const std::string, const std::string> * PARAMS_SET[] = {&params::sub01};
+    const std::map<const std::string, const std::string> * BUILTIN_PARAMS_SET[] = {&params::sub01};
+    const std::map<const std::string, const std::string> * USER_PARAMS_SET[] = {&m_xgb_params};
+    bool const use_user_params = m_xgb_params.size() != 0;
 
     const auto y_hat = run_rank_estimators(
-        std::begin(PARAMS_SET), std::end(PARAMS_SET),
-            time0, MAX_TIMES[m_test_type], train_data, train_y, test_data);
+        use_user_params ? std::begin(USER_PARAMS_SET) : std::begin(BUILTIN_PARAMS_SET),
+        use_user_params ? std::end(USER_PARAMS_SET) : std::end(BUILTIN_PARAMS_SET),
+        time0, MAX_TIMES[m_test_type], train_data, train_y, test_data);
 
     ////////////////////////////////////////////////////////////////////////////
 

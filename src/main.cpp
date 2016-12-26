@@ -23,6 +23,9 @@
 
 #include "MMRF.hpp"
 
+#include <boost/program_options.hpp>
+#include <boost/any.hpp>
+
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -41,6 +44,52 @@ using size_type = std::size_t;
 namespace
 {
 
+
+boost::program_options::variables_map
+parse_options(int argc, char **argv)
+{
+    namespace po = boost::program_options;
+
+    po::variables_map args;
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "produce help message")
+        ("SEED", po::value<int>()->default_value(1), "SEED for RNG")
+        ("n_estimators", po::value<int>()->default_value(50), "XGBoost: number of estimators")
+        ("colsample_bytree", po::value<float>()->default_value(1.0f), "XGBoost: colsample_bytree")
+        ("scale_pos_weight", po::value<float>()->default_value(1.0f), "XGBoost: scale_pos_weight")
+        ("learning_rate", po::value<float>()->default_value(0.3f), "XGBoost: learning_rate")
+        ("subsample", po::value<float>()->default_value(1.0f), "XGBoost: subsample")
+        ("min_child_weight", po::value<float>()->default_value(1.0f), "XGBoost: min_child_weight")
+        ("num_pairsample", po::value<int>()->default_value(1), "XGBoost: num_pairsample")
+        ("max_depth", po::value<int>()->default_value(6), "XGBoost: max_depth")
+        ("xgboost_params", po::value<bool>()->default_value(false), "XGBoost: override model params")
+        ;
+    try
+    {
+        po::store(po::parse_command_line(argc, argv, desc), args);
+    }
+    catch (po::error & ex)
+    {
+        std::cout << ex.what() << std::endl;
+    }
+    catch (boost::bad_any_cast & ex)
+    {
+        std::cout << ex.what() << std::endl;
+    }
+    po::notify(args);
+
+    if (args.count("help"))
+    {
+        std::cout << desc << "\n";
+        std::exit(1);
+    }
+
+    return args;
+}
+
+
 std::vector<std::string>
 read_file(const char * fname)
 {
@@ -55,6 +104,7 @@ read_file(const char * fname)
 
     return vcsv;
 }
+
 
 double score(const std::vector<int> & rank, const std::vector<std::string> & po_vstr)
 {
@@ -125,6 +175,7 @@ double score(const std::vector<int> & rank, const std::vector<std::string> & po_
     return score;
 }
 
+
 bool verify(const std::vector<int> & y_hat, const int N)
 {
     std::unordered_set<int> occurences;
@@ -146,17 +197,6 @@ bool verify(const std::vector<int> & y_hat, const int N)
     return true;
 }
 
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-enum CHUNK_ID
-{
-    AVERAGES = 0,
-    DIFFERENCES = 1,
-    MUTATIONS = 2,
-    PO_TIMES = 3
-};
 
 std::vector<int> shuffled_fold_indices(size_type const NROWS, int const SEED)
 {
@@ -168,6 +208,7 @@ std::vector<int> shuffled_fold_indices(size_type const NROWS, int const SEED)
     return fold_indices;
 }
 
+
 std::vector<size_type> linspace(size_type MAX, size_type N)
 {
     // numpy.linspace(0, MAX, N, endpoint=True)
@@ -178,6 +219,7 @@ std::vector<size_type> linspace(size_type MAX, size_type N)
     ls.back() = MAX;
     return ls;
 }
+
 
 std::vector<int> stratified_fold_indices(std::vector<std::string> const & vstr, size_type const NFOLDS, int const SEED)
 {
@@ -219,9 +261,45 @@ std::vector<int> stratified_fold_indices(std::vector<std::string> const & vstr, 
 }
 
 
+std::map<const std::string, const std::string>
+build_xgb_params(boost::program_options::variables_map const & args)
+{
+    std::map<const std::string, const std::string> ret;
+
+    if (args.at("xgboost_params").as<bool>())
+    {
+        ret.insert({"n_estimators", std::to_string(args.at("n_estimators").as<int>())});
+        ret.insert({"colsample_bytree", std::to_string(args.at("colsample_bytree").as<float>())});
+        ret.insert({"scale_pos_weight", std::to_string(args.at("scale_pos_weight").as<float>())});
+        ret.insert({"learning_rate", std::to_string(args.at("learning_rate").as<float>())});
+        ret.insert({"subsample", std::to_string(args.at("subsample").as<float>())});
+        ret.insert({"min_child_weight", std::to_string(args.at("min_child_weight").as<float>())});
+        ret.insert({"num_pairsample", std::to_string(args.at("num_pairsample").as<int>())});
+        ret.insert({"max_depth", std::to_string(args.at("max_depth").as<int>())});
+    }
+
+    return ret;
+}
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+enum CHUNK_ID
+{
+    AVERAGES = 0,
+    DIFFERENCES = 1,
+    MUTATIONS = 2,
+    PO_TIMES = 3
+};
+
+
 int main(int argc, char **argv)
 {
-    int const SEED = (argc == 2 ? std::atoi(argv[1]) : 1);
+    const auto args = parse_options(argc, argv);
+
+    int const SEED = args.at("SEED").as<int>();
+
     const char CPNUM_FNAME[] = "../data/copynumber_example.csv";
     const char EXPR_FNAME[] = "../data/expressions_example.csv";
     const char MUT_FNAME[] = "../data/mutations_example.csv";
@@ -259,7 +337,7 @@ int main(int argc, char **argv)
 
     constexpr int NFOLDS{5};
 
-    MMRF solver;
+    MMRF solver(build_xgb_params(args));
 
     //std::vector<float> CVscores(NFOLDS);
 
