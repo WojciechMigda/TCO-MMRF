@@ -241,18 +241,23 @@ int main(int argc, char **argv)
 
     std::cout << "[main] Read " << vstr[PO_TIMES].size() << " lines\n";
 
-    // for train data skip first row with feature names
-    for (auto & chunk : vstr)
-    {
-        chunk.erase(chunk.begin());
-    }
+    // extract first row with feature names
+    std::array<std::string, 4> headers;
+    headers[AVERAGES] = vstr[AVERAGES].front();
+    vstr[AVERAGES].erase(vstr[AVERAGES].begin());
+    headers[DIFFERENCES] = vstr[DIFFERENCES].front();
+    vstr[DIFFERENCES].erase(vstr[DIFFERENCES].begin());
+    headers[MUTATIONS] = vstr[MUTATIONS].front();
+    vstr[MUTATIONS].erase(vstr[MUTATIONS].begin());
+    headers[PO_TIMES] = vstr[PO_TIMES].front();
+    vstr[PO_TIMES].erase(vstr[PO_TIMES].begin());
 
     size_type const NROWS = vstr[PO_TIMES].size();
     std::cout << "[main] Input dataset has " << NROWS << " rows\n";
 
     ////////////////////////////////////////////////////////////////////////////
 
-    constexpr int NFOLDS{10};
+    constexpr int NFOLDS{5};
 
     MMRF solver;
 
@@ -293,6 +298,16 @@ int main(int argc, char **argv)
 
         std::cerr << "[main] Train data size: " << train_data[PO_TIMES].size() << std::endl;
         std::cerr << "[main] Test data size: " << test_data[PO_TIMES].size() << std::endl;
+
+        // insert headers
+        test_data[AVERAGES].insert(test_data[AVERAGES].begin(), headers[AVERAGES]);
+        test_data[DIFFERENCES].insert(test_data[DIFFERENCES].begin(), headers[DIFFERENCES]);
+        test_data[MUTATIONS].insert(test_data[MUTATIONS].begin(), headers[MUTATIONS]);
+
+        train_data[AVERAGES].insert(train_data[AVERAGES].begin(), headers[AVERAGES]);
+        train_data[DIFFERENCES].insert(train_data[DIFFERENCES].begin(), headers[DIFFERENCES]);
+        train_data[MUTATIONS].insert(train_data[MUTATIONS].begin(), headers[MUTATIONS]);
+        train_data[PO_TIMES].insert(train_data[PO_TIMES].begin(), headers[PO_TIMES]);
 
         solver.trainingData(
             MMRF::TEST_HOME,
