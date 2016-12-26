@@ -323,32 +323,31 @@ std::vector<float> encode_response(std::vector<std::string> && vstr)
     std::transform(po_times.cbegin(), po_times.cend(), resp.begin(),
         [](const pair_type & pair) -> float
         {
-            union
-            {
-                uint16_t pair[2];
-                float f;
-            } pack;
-            // paranoid assertions for this to work
-            static_assert(sizeof (pack) == 4, "What is happening here?");
-            static_assert(((char *)&pack.pair[1] - (char *)&pack.pair[0]) == 2, "What is happening here?");
-
-            pack.pair[0] = pair.first;
-            pack.pair[1] = pair.second;
-
-            //return pack.f;
+//            union
+//            {
+//                uint16_t pair[2];
+//                float f;
+//            } pack;
+//            // paranoid assertions for this to work
+//            static_assert(sizeof (pack) == 4, "What is happening here?");
+//            static_assert(((char *)&pack.pair[1] - (char *)&pack.pair[0]) == 2, "What is happening here?");
+//
+//            pack.pair[0] = pair.first;
+//            pack.pair[1] = pair.second;
+//
+//            return pack.f;
 #warning TODO // TODO, just prognosis times for the prototype
             if (pair.first != -1)
             {
                 return -(2 * pair.first);
             }
-//            else if (pair.second != -1)
-//            {
-//                return -(2 * pair.second + 1);
-//            }
+            else if (pair.second != -1)
+            {
+                return -(2 * pair.second + 1);
+            }
             else
             {
-//                return +1;
-                return -2000;
+                return -10001;
             }
         });
 
