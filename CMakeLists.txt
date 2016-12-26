@@ -14,9 +14,10 @@ add_definitions( -DDMLC_ENABLE_STD_THREAD=0 )
 #add_definitions( -O0 -ggdb -std=c++11 -Wall -pedantic )
 #add_definitions( -O2 -ggdb -std=c++11 -Wall -pedantic -mmmx -msse -msse2 -msse3 -s -pipe -Wno-sign-compare -march=native )
 add_definitions( -O2 -g -unroll-loops -std=c++11 -Wall -pedantic -mmmx -msse -msse2 -msse3 -s -pipe -Wno-sign-compare -march=native )
-#add_definitions( -O2 -ffast-math -fno-finite-math-only  -msse2 -march=native -std=c++11 -Wall -g -pedantic )
-#add_definitions( -O2 -ftree-vectorize -ffast-math -fno-finite-math-only  -msse2 -march=native -std=c++11 -Wall -g -pedantic )
-#add_definitions( -O3 -ffast-math -msse2 -march=native -std=c++11 -Wall -g -pedantic )
+
+################################################################################
+
+#find_package( Boost REQUIRED COMPONENTS program_options )
 
 ################################################################################
 
@@ -25,9 +26,11 @@ include_directories(
     xgboost/include
     xgboost/dmlc-core/include
     xgboost/rabit/include
+    ${Boost_INCLUDE_DIR}
 )
 
 ################################################################################
+
 
 add_executable( main
     src/main.cpp
@@ -71,5 +74,8 @@ add_executable( main
     xgboost/src/tree/updater_sync.cc
     xgboost/src/tree/tree_model.cc
 )
+
+#target_link_libraries( main ${Boost_LIBRARIES} )
+target_link_libraries( main boost_program_options )
 
 ################################################################################
