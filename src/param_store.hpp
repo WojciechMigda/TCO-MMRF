@@ -40,7 +40,8 @@ const std::map<const std::string, const std::string> sub01
     {"cache_opt", "0"},
 
     {"booster", "gbtree"},
-    {"objective", "rank:pairwise"},
+    //{"objective", "rank:pairwise"},
+    {"objective", "rank:mmrf"},
 
     {"n_estimators", "50"},
     {"reg_alpha", "0"},
@@ -53,7 +54,7 @@ const std::map<const std::string, const std::string> sub01
     {"subsample", "0.8723920700026842"},
     {"reg_lambda", "1"},
     {"min_child_weight", "1"},
-    {"num_pairsample", "61"},
+    //{"num_pairsample", "61"},
 
     {"max_depth", "6"},
 };
