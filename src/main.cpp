@@ -55,7 +55,8 @@ parse_options(int argc, char **argv)
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
-        ("SEED", po::value<int>()->default_value(1), "SEED for RNG")
+        ("seed", po::value<int>()->default_value(1), "SEED for RNG")
+        ("nfolds", po::value<int>()->default_value(3), "number of folds for cross-validation")
         ("n_estimators", po::value<int>()->default_value(50), "XGBoost: number of estimators")
         ("colsample_bytree", po::value<float>()->default_value(1.0f), "XGBoost: colsample_bytree")
         ("scale_pos_weight", po::value<float>()->default_value(1.0f), "XGBoost: scale_pos_weight")
@@ -298,7 +299,7 @@ int main(int argc, char **argv)
 {
     const auto args = parse_options(argc, argv);
 
-    int const SEED = args.at("SEED").as<int>();
+    int const SEED = args.at("seed").as<int>();
 
     const char CPNUM_FNAME[] = "../data/copynumber_example.csv";
     const char EXPR_FNAME[] = "../data/expressions_example.csv";
@@ -335,7 +336,7 @@ int main(int argc, char **argv)
 
     ////////////////////////////////////////////////////////////////////////////
 
-    constexpr int NFOLDS{5};
+    const int NFOLDS = args.at("nfolds").as<int>();
 
     MMRF solver(build_xgb_params(args));
 
@@ -399,7 +400,7 @@ int main(int argc, char **argv)
 
         assert(verify(y_hat, NROWS));
         const auto SCORE = score(y_hat, test_data[PO_TIMES]);
-        std::cerr << "[main] SCORE[" << fold + 1 << "]: " << SCORE << std::endl;
+        std::cerr << "[main] SCORE[" << fold + 1 << "/" << NFOLDS << "]: " << SCORE << std::endl;
 
         scores.push_back(SCORE);
     }
@@ -407,7 +408,7 @@ int main(int argc, char **argv)
     const auto SCORE = std::accumulate(scores.cbegin(), scores.cend(), 0.) / scores.size();
 
     std::cerr << "\n[main] Final SCORE: " << 1e6 * std::max(SCORE, 0.) << std::endl;
-    std::cout << 1e6 * std::max(SCORE, 0.) << std::endl;
+    std::cout << 1e6 * SCORE << std::endl;
 
     return 0;
 }
