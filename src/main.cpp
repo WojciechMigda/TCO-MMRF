@@ -277,6 +277,12 @@ build_xgb_params(boost::program_options::variables_map const & args)
         ret.emplace("min_child_weight", std::to_string(args.at("min_child_weight").as<float>()));
         ret.emplace("num_pairsample", std::to_string(args.at("num_pairsample").as<int>()));
         ret.emplace("max_depth", std::to_string(args.at("max_depth").as<int>()));
+
+        // hardcoded
+        ret.emplace("silent", "1");
+        ret.emplace("cache_opt", "0");
+        ret.emplace("missing", "nan");
+        ret.emplace("booster", "gbtree");
     }
 
     return ret;
@@ -392,11 +398,11 @@ int main(int argc, char **argv)
             MMRF::TEST_HOME,
             train_data[AVERAGES], train_data[DIFFERENCES], train_data[MUTATIONS], train_data[PO_TIMES]);
         const auto y_hat = solver.testingData(test_data[AVERAGES], test_data[DIFFERENCES], test_data[MUTATIONS]);
-        std::cerr << "[main] --- y_hat\n";
-        for (size_type ix{0}; ix < y_hat.size(); ++ix)
-        {
-            std::cerr << y_hat[ix] << ", " << test_data[PO_TIMES][ix] << std::endl;
-        }
+//        std::cerr << "[main] --- y_hat\n";
+//        for (size_type ix{0}; ix < y_hat.size(); ++ix)
+//        {
+//            std::cerr << y_hat[ix] << ", " << test_data[PO_TIMES][ix] << std::endl;
+//        }
 
         assert(verify(y_hat, NROWS));
         const auto SCORE = score(y_hat, test_data[PO_TIMES]);
