@@ -57,16 +57,31 @@ parse_options(int argc, char **argv)
         ("help", "produce help message")
         ("seed", po::value<int>()->default_value(1), "SEED for RNG")
         ("nfolds", po::value<int>()->default_value(3), "number of folds for cross-validation")
-        ("n_estimators", po::value<int>()->default_value(50), "XGBoost: number of estimators")
-        ("colsample_bytree", po::value<float>()->default_value(1.0f), "XGBoost: colsample_bytree")
-        ("scale_pos_weight", po::value<float>()->default_value(1.0f), "XGBoost: scale_pos_weight")
-        ("learning_rate", po::value<float>()->default_value(0.3f), "XGBoost: learning_rate")
-        ("subsample", po::value<float>()->default_value(1.0f), "XGBoost: subsample")
-        ("min_child_weight", po::value<float>()->default_value(1.0f), "XGBoost: min_child_weight")
-        ("num_pairsample", po::value<int>()->default_value(1), "XGBoost: num_pairsample")
-        ("max_depth", po::value<int>()->default_value(6), "XGBoost: max_depth")
-        ("booster", po::value<std::string>()->default_value("gbtree"), "XGBoost: booster")
+
         ("xgboost_params", po::value<bool>()->default_value(false), "XGBoost: override model params")
+        ("n_estimators", po::value<int>()->default_value(50), "XGBoost: number of estimators")
+        ("booster", po::value<std::string>()->default_value("gbtree"), "XGBoost: booster")
+
+        ("colsample_bytree", po::value<float>()->default_value(1.0f),
+            "XGBoost: [gbtree] subsample ratio of columns when constructing each tree. range: (0,1].")
+        ("scale_pos_weight", po::value<float>()->default_value(1.0f),
+            "XGBoost: [gbtree] Control the balance of positive and negative weights, useful for unbalanced classes. A typical value to consider: sum(negative cases) / sum(positive cases).")
+        ("learning_rate", po::value<float>()->default_value(0.3f),
+            "XGBoost: [gbtree] step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features. and eta actually shrinks the feature weights to make the boosting process more conservative. range: [0,1]")
+        ("subsample", po::value<float>()->default_value(1.0f),
+            "XGBoost: [gbtree] subsample ratio of the training instance. Setting it to 0.5 means that XGBoost randomly collected half of the data instances to grow trees and this will prevent overfitting. range: (0,1].")
+        ("min_child_weight", po::value<float>()->default_value(1.0f),
+            "XGBoost: [gbtree] minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression mode, this simply corresponds to minimum number of instances needed to be in each node. The larger, the more conservative the algorithm will be. range: [0,∞]")
+        ("max_depth", po::value<int>()->default_value(6),
+            "XGBoost: [gbtree] maximum depth of a tree, increase this value will make the model more complex / likely to be overfitting. range: [1,∞]")
+        ("num_pairsample", po::value<int>()->default_value(1), "XGBoost: num_pairsample")
+
+        ("reg_lambda", po::value<float>()->default_value(0.0f),
+            "XGBoost: [gblinear] L2 regularization term on weights, increase this value will make model more conservative.")
+        ("reg_alpha", po::value<float>()->default_value(0.0f),
+            "XGBoost: [gblinear] L1 regularization term on weights, increase this value will make model more conservative.")
+        ("reg_lambda_bias", po::value<float>()->default_value(0.0f),
+            "XGBoost: [gblinear] L2 regularization term on bias")
         ;
     try
     {
@@ -279,6 +294,10 @@ build_xgb_params(boost::program_options::variables_map const & args)
         ret.emplace("num_pairsample", std::to_string(args.at("num_pairsample").as<int>()));
         ret.emplace("max_depth", std::to_string(args.at("max_depth").as<int>()));
         ret.emplace("booster", args.at("booster").as<std::string>());
+
+        ret.emplace("reg_lambda", std::to_string(args.at("reg_lambda").as<float>()));
+        ret.emplace("reg_lambda_bias", std::to_string(args.at("reg_lambda_bias").as<float>()));
+        ret.emplace("reg_alpha", std::to_string(args.at("reg_alpha").as<float>()));
 
         // hardcoded
         ret.emplace("silent", "1");
