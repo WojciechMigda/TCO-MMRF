@@ -323,20 +323,6 @@ std::vector<float> encode_response(std::vector<std::string> && vstr)
     std::transform(po_times.cbegin(), po_times.cend(), resp.begin(),
         [](const pair_type & pair) -> float
         {
-//            union
-//            {
-//                uint16_t pair[2];
-//                float f;
-//            } pack;
-//            // paranoid assertions for this to work
-//            static_assert(sizeof (pack) == 4, "What is happening here?");
-//            static_assert(((char *)&pack.pair[1] - (char *)&pack.pair[0]) == 2, "What is happening here?");
-//
-//            pack.pair[0] = pair.first;
-//            pack.pair[1] = pair.second;
-//
-//            return pack.f;
-#warning TODO // TODO, just prognosis times for the prototype
             if (pair.first != -1)
             {
                 return -(2 * pair.first);
@@ -347,7 +333,7 @@ std::vector<float> encode_response(std::vector<std::string> && vstr)
             }
             else
             {
-                return -10001;
+                return -1;
             }
         });
 
@@ -506,7 +492,7 @@ std::vector<int> MMRF::testingData(
             [MMRF::TEST_EXAMPLE] = 2 * 60,
             [MMRF::TEST_PROVISIONAL] = 3 * 60,
             [MMRF::TEST_SYSTEM] = 4 * 60,
-            [MMRF::TEST_HOME] = 4 * 60,
+            [MMRF::TEST_HOME] = 20 * 60,
         };
 
     const std::map<const std::string, const std::string> * BUILTIN_PARAMS_SET[] = {&params::sub01};
