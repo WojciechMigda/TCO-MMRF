@@ -44,6 +44,7 @@ def work():
     def objective(space):
         cmd = './main ' + \
               '--xgboost_params=on ' + \
+              '--booster=gbtree ' + \
               '--learning_rate=0.045 ' + \
               '--n_estimators={} ' + \
               '--colsample_bytree={} ' + \
@@ -65,10 +66,8 @@ def work():
 
         jobs = [cmd + ' --seed={}'.format(i) for i in range(3)]
 
-        #import multiprocessing
         import subprocess
         import shlex
-        #import time
         processes = []
         for job in jobs:
             print("Running: " + job)
@@ -113,7 +112,7 @@ def work():
         space=space,
         algo=tpe.suggest,
         #max_evals=500,
-        max_evals=32,
+        max_evals=300,
         )
     print(best)
     return
