@@ -85,6 +85,7 @@ def work():
             acc += score
 
         acc = acc / len(jobs)
+        print(space)
         print("Avg score: {}".format(acc))
         return -acc
 
@@ -96,22 +97,23 @@ def work():
     # cheatsheet:
     # https://github.com/hyperopt/hyperopt/wiki/FMin#21-parameter-expressions
     space = {
-        'n_estimators': hp.quniform("x_n_estimators", 10, 80, 5),
-        'max_depth': hp.quniform("x_max_depth", 1, 24, 1),
+        'n_estimators': hp.quniform("x_n_estimators", 10, 40, 5),
+        'max_depth': hp.quniform("x_max_depth", 1, 8, 1),
+        #'min_child_weight': hp.quniform ('x_min_child', 45, 240, 5),
         'min_child_weight': hp.quniform ('x_min_child', 1, 16, 1),
         #'gamma': hp.uniform ('x_gamma', 0.0, 2.0),
         'scale_pos_weight': hp.uniform ('x_scale_pos_weight', 0.2, 1.0),
 
         #'learning_rate': hp.uniform ('x_learning_rate', 0.03, 0.06),
 
-        'subsample': hp.uniform ('x_subsample', 0.8, 1.0),
+        'subsample': hp.uniform ('x_subsample', 0.4, 1.0),
         'colsample_bytree': hp.uniform ('x_colsample_bytree', 0.3, 1.0)
         }
     best = fmin(fn=objective,
         space=space,
         algo=tpe.suggest,
         #max_evals=500,
-        max_evals=3,
+        max_evals=32,
         )
     print(best)
     return
