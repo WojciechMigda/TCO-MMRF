@@ -65,6 +65,7 @@ parse_options(int argc, char **argv)
         ("min_child_weight", po::value<float>()->default_value(1.0f), "XGBoost: min_child_weight")
         ("num_pairsample", po::value<int>()->default_value(1), "XGBoost: num_pairsample")
         ("max_depth", po::value<int>()->default_value(6), "XGBoost: max_depth")
+        ("booster", po::value<std::string>()->default_value("gbtree"), "XGBoost: booster")
         ("xgboost_params", po::value<bool>()->default_value(false), "XGBoost: override model params")
         ;
     try
@@ -277,12 +278,12 @@ build_xgb_params(boost::program_options::variables_map const & args)
         ret.emplace("min_child_weight", std::to_string(args.at("min_child_weight").as<float>()));
         ret.emplace("num_pairsample", std::to_string(args.at("num_pairsample").as<int>()));
         ret.emplace("max_depth", std::to_string(args.at("max_depth").as<int>()));
+        ret.emplace("booster", args.at("booster").as<std::string>());
 
         // hardcoded
         ret.emplace("silent", "1");
         ret.emplace("cache_opt", "0");
         ret.emplace("missing", "nan");
-        ret.emplace("booster", "gbtree");
     }
 
     return ret;
