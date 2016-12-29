@@ -61,6 +61,7 @@ parse_options(int argc, char **argv)
         ("xgboost_params", po::value<bool>()->default_value(false), "XGBoost: override model params")
         ("n_estimators", po::value<int>()->default_value(50), "XGBoost: number of estimators")
         ("booster", po::value<std::string>()->default_value("gbtree"), "XGBoost: booster")
+        ("objective", po::value<std::string>()->default_value("rank:mmrf"), "XGBoost: objective")
 
         ("colsample_bytree", po::value<float>()->default_value(1.0f),
             "XGBoost: [gbtree] subsample ratio of columns when constructing each tree. range: (0,1].")
@@ -286,6 +287,9 @@ build_xgb_params(boost::program_options::variables_map const & args)
     if (args.at("xgboost_params").as<bool>())
     {
         ret.emplace("n_estimators", std::to_string(args.at("n_estimators").as<int>()));
+        ret.emplace("booster", args.at("booster").as<std::string>());
+        ret.emplace("objective", args.at("objective").as<std::string>());
+
         ret.emplace("colsample_bytree", std::to_string(args.at("colsample_bytree").as<float>()));
         ret.emplace("scale_pos_weight", std::to_string(args.at("scale_pos_weight").as<float>()));
         ret.emplace("learning_rate", std::to_string(args.at("learning_rate").as<float>()));
@@ -293,7 +297,6 @@ build_xgb_params(boost::program_options::variables_map const & args)
         ret.emplace("min_child_weight", std::to_string(args.at("min_child_weight").as<float>()));
         ret.emplace("num_pairsample", std::to_string(args.at("num_pairsample").as<int>()));
         ret.emplace("max_depth", std::to_string(args.at("max_depth").as<int>()));
-        ret.emplace("booster", args.at("booster").as<std::string>());
 
         ret.emplace("reg_lambda", std::to_string(args.at("reg_lambda").as<float>()));
         ret.emplace("reg_lambda_bias", std::to_string(args.at("reg_lambda_bias").as<float>()));
