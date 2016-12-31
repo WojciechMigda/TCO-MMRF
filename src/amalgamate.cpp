@@ -1,3 +1,4 @@
+#define TCO_XGB
 #define DMLC_ENABLE_STD_THREAD 0
 
 #pragma GCC optimize ( "-O2" )
