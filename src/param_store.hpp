@@ -32,7 +32,7 @@ namespace params
 {
 
 
-const std::map<const std::string, const std::string> sub01
+const std::map<const std::string, const std::string> subxx
 {
     {"missing", "nan"},
     {"seed", "0"},
@@ -47,7 +47,7 @@ const std::map<const std::string, const std::string> sub01
     {"reg_alpha", "0"},
     {"colsample_bytree", "0.46035362112038597"},
     {"colsample_bylevel", "1"},
-    {"scale_pos_weight", "0.38570090801277784"},
+    //{"scale_pos_weight", "0.38570090801277784"},
     {"learning_rate", "0.045"},
     {"max_delta_step", "0"},
     {"base_score", "0.5"},
@@ -59,7 +59,32 @@ const std::map<const std::string, const std::string> sub01
     {"max_depth", "6"},
 };
 
+const std::map<const std::string, const std::string> sub01
+{
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
 
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+
+    {"n_estimators", "95"},
+    {"reg_alpha", "0."},
+    //{"colsample_bytree", "0.36915845533198666"},
+    {"colsample_bytree", "0.369158"},
+    //{"colsample_bylevel", "1"},
+    {"scale_pos_weight", "1."},
+    {"learning_rate", "0.012"},
+    //{"max_delta_step", "0"},
+    //{"base_score", "0.5"},
+    //{"subsample", "0.47132337425305915"},
+    {"subsample", "0.471323"},
+    {"reg_lambda", "0."},
+    {"min_child_weight", "30"},
+
+    {"max_depth", "1"},
+};
 
 }  // namespace params
 
