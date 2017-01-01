@@ -1,7 +1,7 @@
 #define TCO_XGB
 #define DMLC_ENABLE_STD_THREAD 0
 
-#pragma GCC optimize ( "-O2" )
+#pragma GCC optimize ( "-O1" )
 
 #include "../xgboost/src/c_api/c_api.cc"
 #include "../xgboost/src/data/simple_csr_source.cc"
