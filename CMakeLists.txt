@@ -44,18 +44,18 @@ add_executable( main
     xgboost/rabit/src/allreduce_base.cc
     xgboost/rabit/src/allreduce_robust.cc
     xgboost/src/c_api/c_api_error.cc
-    xgboost/dmlc-core/src/io.cc
-    xgboost/dmlc-core/src/io/local_filesys.cc
+    # xgboost/dmlc-core/src/io.cc
+    # xgboost/dmlc-core/src/io/local_filesys.cc
     xgboost/src/learner.cc
     xgboost/src/objective/objective.cc
-    xgboost/dmlc-core/src/io/input_split_base.cc
+    # xgboost/dmlc-core/src/io/input_split_base.cc
     xgboost/src/common/common.cc
     xgboost/src/gbm/gbm.cc
-    xgboost/dmlc-core/src/io/recordio_split.cc
+    # xgboost/dmlc-core/src/io/recordio_split.cc
     xgboost/src/metric/metric.cc
     xgboost/src/data/simple_dmatrix.cc
-    xgboost/dmlc-core/src/data.cc
-    xgboost/dmlc-core/src/io/line_split.cc
+    # xgboost/dmlc-core/src/data.cc
+    # xgboost/dmlc-core/src/io/line_split.cc
     xgboost/src/objective/regression_obj.cc
     xgboost/src/objective/multiclass_obj.cc
     xgboost/src/metric/elementwise_metric.cc
