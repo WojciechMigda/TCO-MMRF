@@ -45,12 +45,96 @@
 
 using real_type = float;
 using array_type = num::array2d<real_type>;
+using varray_type = std::valarray<real_type>;
 
 using size_type = std::size_t;
 
 constexpr float MISSING{NAN};
 constexpr float XGB_MISSING{NAN};
 
+
+std::vector<int>
+knn(
+    const array_type & _train_data,
+    const std::vector<float> & _train_y,
+    const array_type & _test_data,
+    const size_type N)
+{
+    const auto TR_NROWS = _train_data.shape().first;
+    const auto TE_NROWS = _test_data.shape().first;
+    const auto NCOLS = _train_data.shape().second;
+
+    array_type df = num::zeros<real_type>({TR_NROWS + TE_NROWS, _train_data.shape().second});
+
+    df[df.rows(0, TR_NROWS - 1)] = _train_data[_train_data.rows(0, TR_NROWS - 1)];
+    df[df.rows(TR_NROWS, TR_NROWS + TE_NROWS - 1)] = _test_data[_test_data.rows(0, TE_NROWS - 1)];
+
+    varray_type weights = {232, 133, 106, 89, 72, 63, 63, 55, 52, 50, 50, 42, 39, 30, 29, 26, 26, 26, 24, 24, 24, 23, 23, 23, 22, 22, 20, 18, 18, 18, 18, 18, 17, 16, 16, 16, 16, 16, 15, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    weights = weights / weights.sum();
+
+    for (size_type cix = 0; cix < NCOLS; ++cix)
+    {
+        varray_type col = df[df.column(cix)];
+        auto nan_mask = (col == col);
+        varray_type masked = col[nan_mask];
+
+        if (masked.size() == 0)
+        {
+            continue;
+        }
+
+        auto mean = masked.sum() / masked.size();
+        auto dev = std::sqrt(((masked - mean) * (masked - mean)).sum() / (masked.size() - 1));
+
+        if (dev == 0.)
+        {
+            continue;
+        }
+
+        df[df.column(cix)] = (col - mean) / dev;
+    }
+
+
+    std::vector<int> y_hat(TE_NROWS);
+    std::vector<int> y_train(TR_NROWS);
+    std::transform(_train_y.cbegin(), _train_y.cend(), y_train.begin(), [](const float x){ return std::lround(x);});
+
+    for (size_type teix = TR_NROWS; teix < (TR_NROWS + TE_NROWS); ++teix)
+    {
+        varray_type terow = df[df.row(teix)];
+        using d_ix_pair = std::pair<real_type, size_type>;
+        std::vector<d_ix_pair> distances(TR_NROWS);
+
+        for (size_type trix = 0; trix < TR_NROWS; ++trix)
+        {
+            varray_type trrow = df[df.row(trix)];
+
+            trrow -= terow;
+            trrow *= trrow;
+            trrow *= weights;
+            auto nan_mask = (trrow == trrow);
+            varray_type masked = trrow[nan_mask];
+            distances[trix] = {masked.sum() / masked.size(), trix};
+        }
+        std::sort(distances.begin(), distances.end(), [](d_ix_pair const & a, d_ix_pair const & b){ return a.first < b.first;});
+
+        // take closest match, or...
+        y_hat[teix - TR_NROWS] = y_train[distances[0].second];
+        for (size_type ix = 0; ix < N; ++ix)
+        {
+            auto yix = distances[ix].second;
+
+            if ((y_train[yix] % 2) == 0)
+            {
+                // ... overwrite it with one that progressed
+                y_hat[teix - TR_NROWS] = y_train[yix];
+                break;
+            }
+        }
+    }
+
+    return y_hat;
+}
 
 /*
  * Wrapper which returns DMatrixHandle directly and not through out param
@@ -411,30 +495,36 @@ run_rank_estimators(
     }
 
     // zip accumulated probabilities with rank indices
-    std::vector<std::pair<float, size_type>> zipped;
+    using zip_type = std::tuple<float, size_type, size_type>;
+    std::vector<zip_type> zipped;
     for (size_type ix{0}; ix < y_hat_proba_cumm.size(); ++ix)
     {
-        zipped.emplace_back(y_hat_proba_cumm[ix], ix + 1);
+        zipped.emplace_back(y_hat_proba_cumm[ix], ix, 0);
     }
     qsort(zipped.data(), zipped.size(), sizeof (zipped.front()),
         [](const void * avp, const void * bvp)
         {
-            auto ap = static_cast<const std::pair<float, size_type> *>(avp);
-            auto bp = static_cast<const std::pair<float, size_type> *>(bvp);
+            auto ap = static_cast<const zip_type *>(avp);
+            auto bp = static_cast<const zip_type *>(bvp);
 
             // descending order
             //return (ap->first > bp->first) - (ap->first < bp->first);
             // ascending order
-            return (ap->first < bp->first) - (ap->first > bp->first);
+            return (std::get<0>(*ap) < std::get<0>(*bp)) - (std::get<0>(*ap) > std::get<0>(*bp));
         });
+    for (size_type ix{0}; ix < y_hat_proba_cumm.size(); ++ix)
+    {
+        std::get<2>(zipped[ix]) = ix + 1;
+    }
+    std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<1>(a) < std::get<1>(b); });
 
     // unzip index into y_hat
     std::vector<size_type> y_hat(test_data.shape().first);
 
     std::transform(zipped.cbegin(), zipped.cend(), y_hat.begin(),
-        [](const std::pair<float, size_type> & p)
+        [](const zip_type & p)
         {
-            return p.second;
+            return std::get<2>(p);
         });
 
     return y_hat;
@@ -484,26 +574,49 @@ std::vector<int> MMRF::testingData(
     std::vector<float> train_y = encode_response(std::move(m_prog_obs_time));
 
     // placeholder for any feature engineering: i_data -> data
-//    auto select_features = [](array_type && arr) -> array_type
-//    {
-//        static const size_type indices[] = {0, 47789, 18898, 42911, 48924, 50575, 2, 19126, 7, 30007, 21152, 20655, 38975, 53340, 32377, 30, 26962, 19194, 39332, 27252, 11579, 32138, 3, 24088, 19, 18939, 14957, 55726, 3328, 16970, 10595, 1, 21999, 26648, 2617, 19848, 13742, 10051, 22096, 811, 20, 18900, 9906, 8672, 4293, 27265, 25370, 20604, 18, 15817, 7894, 25230, 21876, 19464, 692, 4993, 32813, 29294, 19703, 18916, 16772, 15484, 14667, 9998, 6897, 5018, 27580, 23242, 21520, 1834, 15537, 7455, 4187, 32612, 24177, 14679, 7793, 4422, 39925, 35689, 35040, 20345, 13072, 36604, 31758, 2410, 14851, 1396, 1236, 1005, 6694, 6557, 5267, 4614, 31911, 2821, 24523, 23396, 20685, 19668, 19514, 19229, 18948, 18883, 15, 12159, 9952, 8355, 7856, 7387, 7243, 6966, 65, 6323, 5543, 4748, 4100, 34629, 34390, 30836, 21, 20498, 20009, 19292, 19008, 18729, 17516, 15573, 14812, 1421, 1346, 10436, 943, 9209, 8718, 766, 7624, 7542, 74, 673, 5879, 5803, 5437, 536, 517, 4886, 4825, 472, 45284, 4268, 41350, 36907, 361, 36, 3566, 35445, 351, 328, 29168, 27835, 24566, 24178, 22721, 20104, 19641, 19157, 19064, 18923, 18918, 18754, 18454, 18357, 1806, 17, 1689, 165, 16, 15873, 15501, 15263, 14686, 13347, 12997, 12857, 11975, 9942, 7934, 7178, 5935, 5737, 56428, 5631, 5451, 5385, 4935, 4233, 4202, 401, 3639, 3469, 3445, 31402, 286, 28015, 27289, 2603, 25775, 22894, 22890, 2192, 21018, 20812, 19948, 19217, 19067, 18959, 18921, 18917, 18914, 18913, 18596, 18442, 18351, 17455, 17196, 16917, 16484, 15659, 15638, 15447, 147, 14497, 1438, 14252, 13956, 13570, 13454, 13065, 12323, 12275, 11668, 1161, 10340, 9989, 9869, 9853, 94, 91, 9084, 905, 9, 8981, 8956, 8542, 8223, 816, 770, 77, 7549, 71, 6336, 6331, 6204, 6, 5961, 5939, 592, 5845, 5527, 5497, 516, 510, 5064, 5058, 46870, 4681, 45584, 4518, 4305, 42438, 370, 35655, 3524, 34676, 33947, 33253, 332, 32713, 32111, 3152, 3055, 2985, 2884, 2734, 27258, 2630, 2614, 26, 2431, 24087, 2408, 23979, 23921, 23254, 22192, 2217, 22165, 22, 20277, 19938, 19607, 19522, 19250, 19249, 19174, 19142, 19082, 1905, 18935, 18824, 1822, 17915, 17805, 17795, 17712, 17707, 17626, 17618, 17402, 17133, 16801, 16782, 16380, 16023, 15755, 15641, 15341, 1522, 15038, 1499, 14260, 139, 137, 13366, 13334, 1292, 12826, 12799, 1266, 12655, 12629, 11976, 11508, 1141, 112, 1094, 10902, 10776, 10261, 1014, 1006, 9878, 967, 95, 932, 9198, 9043, 9003, 8945, 8853, 8778, 8745, 873, 8597, 8508, 8293, 8278, 79, 789, 7754, 7422, 7367, 712, 7091, 6989, 682, 669, 6674, 6660, 6643, 664, 6636, 6556, 6456, 6376, 62, 6164, 61, 6032, 6031, 5932, 561, 56, 5507, 55, 54, 5348, 5271, 5238, 5100, 5078, 50492, 501, 5, 4972, 492, 4834, 4772, 427, 42460, 42388, 4191, 4157, 41353, 406, 400, 4, 3968, 39, 3872, 387, 38495, 3812, 3763, 37112, 35837, 35342, 3521, 35077, 350, 3476, 3392, 3363, 33508, 32994, 3224, 31049, 309, 2996, 2960, 29355, 2925, 2891, 27928, 272, 27, 2694, 268, 26656, 2661, 262, 25030, 24455, 2440, 24171, 23635, 235, 2268, 22246, 22008, 2188, 21653, 21478, 21277, 20899, 2047, 20251, 20021, 19742, 19723, 19610, 1953, 19441, 1939, 19309, 19198, 19068, 19045, 19036, 18961, 18901, 18803, 18693, 1865, 183, 18068, 17761, 17536, 17421, 17127, 16964, 168, 16577, 16561, 16521, 16325, 16301, 16098, 15986, 15961, 15950, 15933, 15920, 15877, 15785, 15730, 15704, 15698, 1555, 15512, 15166, 15115, 1505, 14913, 14685, 14622, 14517, 14170, 13987, 13962, 13803, 138, 13720, 13703, 13534, 13503, 13391, 1330, 13241, 1309, 13089, 12944, 1283, 1272, 1241, 124, 12316, 1202, 12, 1199, 11911, 11801, 1169, 114, 11080, 11016, 10927, 10775, 10643, 10373, 10325, 1009, 100, 10};
-//
-//        const size_type NCOL = std::end(indices) - std::begin(indices);
-//        const size_type NROW = arr.shape().first;
-//
-//        auto ret = num::zeros<real_type>({NROW, NCOL});
-//        for (size_type ix = 0; ix < NCOL; ++ix)
-//        {
-//            ret[ret.column(ix)] = arr[arr.column(indices[ix])];
-//        }
-//
-//        return ret;
-//    };
-//
-//    array_type train_data = select_features(std::move(i_train_data));
-//    array_type test_data = select_features(std::move(i_test_data));
+#define FSEL
+#ifdef FSEL
+    auto select_features = [](array_type && arr) -> array_type
+    {
+        static const size_type indices[] = {0, 47789, 18898, 42911, 48924, 50575, 2, 19126, 7, 30007, 21152, 20655, 38975, 53340, 32377, 30, 26962, 19194, 39332, 27252, 11579, 32138, 3, 24088, 19, 18939, 14957, 55726, 3328, 16970, 10595, 1, 21999, 26648, 2617, 19848, 13742, 10051, 22096, 811, 20, 18900, 9906, 8672, 4293, 27265, 25370, 20604, 18, 15817, 7894, 25230, 21876, 19464, 692, 4993, 32813, 29294, 19703, 18916, 16772, 15484, 14667, 9998, 6897, 5018, 27580, 23242, 21520, 1834, 15537, 7455, 4187, 32612, 24177, 14679, 7793, 4422, 39925, 35689, 35040, 20345, 13072, 36604, 31758, 2410, 14851, 1396, 1236, 1005, 6694, 6557, 5267, 4614, 31911, 2821, 24523, 23396, 20685, 19668, 19514, 19229, 18948, 18883, 15, 12159, 9952, 8355, 7856, 7387, 7243, 6966, 65, 6323, 5543, 4748, 4100, 34629, 34390, 30836, 21, 20498, 20009, 19292, 19008, 18729, 17516, 15573, 14812, 1421, 1346, 10436, 943, 9209, 8718, 766, 7624, 7542, 74, 673, 5879, 5803, 5437, 536, 517, 4886, 4825, 472, 45284, 4268, 41350, 36907, 361, 36, 3566, 35445, 351, 328, 29168, 27835, 24566, 24178, 22721, 20104, 19641, 19157, 19064, 18923, 18918, 18754, 18454, 18357, 1806, 17, 1689, 165, 16, 15873, 15501, 15263, 14686, 13347, 12997, 12857, 11975, 9942, 7934, 7178, 5935, 5737, 56428, 5631, 5451, 5385, 4935, 4233, 4202, 401, 3639, 3469, 3445, 31402, 286, 28015, 27289, 2603, 25775, 22894, 22890, 2192, 21018, 20812, 19948, 19217, 19067, 18959, 18921, 18917, 18914, 18913, 18596, 18442, 18351, 17455, 17196, 16917, 16484, 15659, 15638, 15447, 147, 14497, 1438, 14252, 13956, 13570, 13454, 13065, 12323, 12275, 11668, 1161, 10340, 9989, 9869, 9853, 94, 91, 9084, 905, 9, 8981, 8956, 8542, 8223, 816, 770, 77, 7549, 71, 6336, 6331, 6204, 6, 5961, 5939, 592, 5845, 5527, 5497, 516, 510, 5064, 5058, 46870, 4681, 45584, 4518, 4305, 42438, 370, 35655, 3524, 34676, 33947, 33253, 332, 32713, 32111, 3152, 3055, 2985, 2884, 2734, 27258, 2630, 2614, 26, 2431, 24087, 2408, 23979, 23921, 23254, 22192, 2217, 22165, 22, 20277, 19938, 19607, 19522, 19250, 19249, 19174, 19142, 19082, 1905, 18935, 18824, 1822, 17915, 17805, 17795, 17712, 17707, 17626, 17618, 17402, 17133, 16801, 16782, 16380, 16023, 15755, 15641, 15341, 1522, 15038, 1499, 14260, 139, 137, 13366, 13334, 1292, 12826, 12799, 1266, 12655, 12629, 11976, 11508, 1141, 112, 1094, 10902, 10776, 10261, 1014, 1006, 9878, 967, 95, 932, 9198, 9043, 9003, 8945, 8853, 8778, 8745, 873, 8597, 8508, 8293, 8278, 79, 789, 7754, 7422, 7367, 712, 7091, 6989, 682, 669, 6674, 6660, 6643, 664, 6636, 6556, 6456, 6376, 62, 6164, 61, 6032, 6031, 5932, 561, 56, 5507, 55, 54, 5348, 5271, 5238, 5100, 5078, 50492, 501, 5, 4972, 492, 4834, 4772, 427, 42460, 42388, 4191, 4157, 41353, 406, 400, 4, 3968, 39, 3872, 387, 38495, 3812, 3763, 37112, 35837, 35342, 3521, 35077, 350, 3476, 3392, 3363, 33508, 32994, 3224, 31049, 309, 2996, 2960, 29355, 2925, 2891, 27928, 272, 27, 2694, 268, 26656, 2661, 262, 25030, 24455, 2440, 24171, 23635, 235, 2268, 22246, 22008, 2188, 21653, 21478, 21277, 20899, 2047, 20251, 20021, 19742, 19723, 19610, 1953, 19441, 1939, 19309, 19198, 19068, 19045, 19036, 18961, 18901, 18803, 18693, 1865, 183, 18068, 17761, 17536, 17421, 17127, 16964, 168, 16577, 16561, 16521, 16325, 16301, 16098, 15986, 15961, 15950, 15933, 15920, 15877, 15785, 15730, 15704, 15698, 1555, 15512, 15166, 15115, 1505, 14913, 14685, 14622, 14517, 14170, 13987, 13962, 13803, 138, 13720, 13703, 13534, 13503, 13391, 1330, 13241, 1309, 13089, 12944, 1283, 1272, 1241, 124, 12316, 1202, 12, 1199, 11911, 11801, 1169, 114, 11080, 11016, 10927, 10775, 10643, 10373, 10325, 1009, 100, 10};
+
+        const size_type NCOL = std::end(indices) - std::begin(indices);
+        const size_type NROW = arr.shape().first;
+
+        auto ret = num::zeros<real_type>({NROW, NCOL});
+        for (size_type ix = 0; ix < NCOL; ++ix)
+        {
+            ret[ret.column(ix)] = arr[arr.column(indices[ix])];
+        }
+
+        return ret;
+    };
+
+    array_type train_data = select_features(std::move(i_train_data));
+    array_type test_data = select_features(std::move(i_test_data));
+#else
     array_type train_data = std::move(i_train_data);
     array_type test_data = std::move(i_test_data);
+#endif
+
+//    auto _yhat = knn(train_data, train_y, test_data, 7);
+//    {
+//        using zip_type = std::tuple<int, size_type, size_type>;
+//        std::vector<zip_type> zipped(_yhat.size());
+//        for (size_type ix = 0; ix < _yhat.size(); ++ix)
+//        {
+//            zipped[ix] = std::make_tuple(_yhat[ix], ix, 0);
+//        }
+//        std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<0>(a) > std::get<0>(b); });
+//        for (size_type ix = 0; ix < _yhat.size(); ++ix)
+//        {
+//            std::get<2>(zipped[ix]) = ix + 1;
+//        }
+//        std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<1>(a) < std::get<1>(b); });
+//        std::vector<int> ranks;
+//        std::transform(zipped.cbegin(), zipped.cend(), std::back_inserter(ranks), [](zip_type const & z) -> int { return std::get<2>(z); });
+//        return ranks;
+//    }
 
     const long int MAX_TIMES[] =
         {
