@@ -44,23 +44,18 @@ def work():
     def objective(space):
         cmd = './main ' + \
               '--xgboost_params=on ' + \
-              '--booster=gbtree ' + \
-              '--objective=rank:mmrf ' + \
+              '--booster=gblinear ' + \
               '--learning_rate=0.045 ' + \
               '--n_estimators={} ' + \
-              '--colsample_bytree={} ' + \
-              '--scale_pos_weight={} ' + \
-              '--subsample={} ' + \
-              '--min_child_weight={} ' + \
-              '--max_depth={} ' + \
+              '--reg_lambda={} ' + \
+              '--reg_alpha={} ' + \
+              '--reg_lambda_bias={} ' + \
               ''
         cmd = cmd.format(
                 int(space['n_estimators']),
-                space['colsample_bytree'],
-                1., #space['scale_pos_weight'],
-                space['subsample'],
-                space['min_child_weight'],
-                int(space['max_depth']),
+                space['reg_lambda'],
+                space['reg_alpha'],
+                space['reg_lambda_bias']
                 )
 
         acc = 0.
@@ -97,17 +92,11 @@ def work():
     # cheatsheet:
     # https://github.com/hyperopt/hyperopt/wiki/FMin#21-parameter-expressions
     space = {
-        'n_estimators': hp.quniform("x_n_estimators", 20, 500, 5),
-        'max_depth': hp.quniform("x_max_depth", 1, 8, 1),
-        #'min_child_weight': hp.quniform ('x_min_child', 45, 120, 5),
-        'min_child_weight': hp.quniform ('x_min_child', 16, 80, 1),
-        #'gamma': hp.uniform ('x_gamma', 0.0, 2.0),
-        #'scale_pos_weight': hp.uniform ('x_scale_pos_weight', 0.2, 1.0),
-
+        'n_estimators': hp.quniform("x_n_estimators", 10, 80, 5),
+        'reg_lambda': hp.uniform ('x_reg_lambda', 0.0, 10.0),
+        'reg_alpha': hp.uniform ('x_reg_alpha', 0.0, 10.0),
+        'reg_lambda_bias': hp.uniform ('x_reg_lambda_bias', 0.0, 10.0),
         #'learning_rate': hp.uniform ('x_learning_rate', 0.03, 0.06),
-
-        'subsample': hp.uniform ('x_subsample', 0.3, 1.0),
-        'colsample_bytree': hp.uniform ('x_colsample_bytree', 0.3, 1.0)
         }
     best = fmin(fn=objective,
         space=space,
