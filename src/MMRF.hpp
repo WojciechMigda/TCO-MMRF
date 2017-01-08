@@ -626,7 +626,12 @@ std::vector<int> MMRF::testingData(
             [MMRF::TEST_HOME] = 20 * 60,
         };
 
-    const std::map<const std::string, const std::string> * BUILTIN_PARAMS_SET[] = {&params::subxx};
+    const std::map<const std::string, const std::string> * BUILTIN_PARAMS_SET[] =
+        {
+            &params::p467633,
+            &params::p473309,
+//            &params::p487427
+        };
     const std::map<const std::string, const std::string> * USER_PARAMS_SET[] = {&m_xgb_params};
     bool const use_user_params = m_xgb_params.size() != 0;
 
