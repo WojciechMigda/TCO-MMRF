@@ -31,6 +31,160 @@
 namespace params
 {
 
+const std::map<const std::string, const std::string> p487427
+{
+    // reduced, gbtree, log 4
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1450"},
+    {"colsample_bytree", "0.5695947846708151"},
+    {"subsample", "0.6224407088745174"},
+    {"min_child_weight", "7"},
+    {"max_depth", "8"},
+};
+
+const std::map<const std::string, const std::string> p474499
+{
+    // reduced, gbtree, log 4
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1350"},
+    {"colsample_bytree", "0.3650062059202914"},
+    {"subsample", "0.8049900350194208"},
+    {"min_child_weight", "8"},
+    {"max_depth", "6"},
+};
+
+const std::map<const std::string, const std::string> p473309
+{
+    // reduced, gbtree, log 4
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1550"},
+    {"colsample_bytree", "0.8867598973496681"},
+    {"subsample", "0.6951107645231182"},
+    {"min_child_weight", "4"},
+    {"max_depth", "7"},
+};
+
+const std::map<const std::string, const std::string> p471278
+{
+    // reduced, gbtree, log 4
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1425"},
+    {"colsample_bytree", "0.3022991243094779"},
+    {"subsample", "0.7569095600459079"},
+    {"min_child_weight", "7"},
+    {"max_depth", "7"},
+};
+
+const std::map<const std::string, const std::string> p468236
+{
+    // reduced, gbtree, log 4
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1500"},
+    {"colsample_bytree", "0.3030973568933607"},
+    {"subsample", "0.567424015678082"},
+    {"min_child_weight", "14"},
+    {"max_depth", "2"},
+};
+
+const std::map<const std::string, const std::string> p467633
+{
+    // reduced, gbtree, log 3
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "1275"},
+    {"colsample_bytree", "0.7395611926146516"},
+    {"subsample", "0.6249785521380649"},
+    {"min_child_weight", "9"},
+    {"max_depth", "5"},
+};
+
+const std::map<const std::string, const std::string> p466087
+{
+    // reduced, gbtree, log 3
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "900"},
+    {"colsample_bytree", "0.7325060841092922"},
+    {"subsample", "0.5406833896055423"},
+    {"min_child_weight", "7"},
+    {"max_depth", "7"},
+};
+
+const std::map<const std::string, const std::string> p463737
+{
+    // reduced, gbtree, log 3
+    {"missing", "nan"},
+    {"seed", "0"},
+    {"silent", "1"},
+    {"cache_opt", "0"},
+
+    {"booster", "gbtree"},
+    {"objective", "rank:mmrf"},
+    {"learning_rate", "0.045"},
+
+    {"n_estimators", "950"},
+    {"colsample_bytree", "0.41090454762036704"},
+    {"subsample", "0.6460306760081187"},
+    {"min_child_weight", "14"},
+    {"max_depth", "5"},
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 const std::map<const std::string, const std::string> subxx
 {
@@ -43,20 +197,18 @@ const std::map<const std::string, const std::string> subxx
     //{"objective", "rank:pairwise"},
     {"objective", "rank:mmrf"},
 
-    {"n_estimators", "50"},
+    {"n_estimators", "235"},
     {"reg_alpha", "0"},
-    {"colsample_bytree", "0.46035362112038597"},
+    {"colsample_bytree", "0.887023367906893"},
     {"colsample_bylevel", "1"},
-    //{"scale_pos_weight", "0.38570090801277784"},
     {"learning_rate", "0.045"},
     {"max_delta_step", "0"},
     {"base_score", "0.5"},
-    {"subsample", "0.8723920700026842"},
+    {"subsample", "0.35658872517104523"},
     {"reg_lambda", "1"},
-    {"min_child_weight", "1"},
-    //{"num_pairsample", "61"},
+    {"min_child_weight", "23"},
 
-    {"max_depth", "6"},
+    {"max_depth", "4"},
 };
 
 const std::map<const std::string, const std::string> sub01
