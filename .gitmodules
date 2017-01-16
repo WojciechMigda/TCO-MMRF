@@ -4,3 +4,6 @@
 [submodule "py/hyperopt"]
 	path = py/hyperopt
 	url = https://github.com/hyperopt/hyperopt.git
+[submodule "cpplinq"]
+	path = cpplinq
+	url = https://github.com/mrange/cpplinq.git
