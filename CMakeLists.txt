@@ -13,7 +13,7 @@ add_definitions( -DTCO_XGB -DDMLC_ENABLE_STD_THREAD=0 )
 
 #add_definitions( -O0 -ggdb -std=c++11 -Wall -pedantic )
 #add_definitions( -O2 -ggdb -std=c++11 -Wall -pedantic -mmmx -msse -msse2 -msse3 -s -pipe -Wno-sign-compare -march=native )
-add_definitions( -O2 -g -unroll-loops -std=c++11 -Wall -pedantic -mmmx -msse -msse2 -msse3 -s -pipe -Wno-sign-compare -march=native )
+add_definitions( -O2 -unroll-loops -std=c++11 -Wall -pedantic -mmmx -msse -msse2 -msse3 -s -pipe -Wno-sign-compare -march=native )
 
 ################################################################################
 
@@ -22,6 +22,7 @@ add_definitions( -O2 -g -unroll-loops -std=c++11 -Wall -pedantic -mmmx -msse -ms
 ################################################################################
 
 include_directories(
+    cpplinq/CppLinq
     src
     xgboost/include
     xgboost/dmlc-core/include
@@ -31,6 +32,11 @@ include_directories(
 
 ################################################################################
 
+add_library( parse_csv
+    src/parse_csv.cpp
+)
+get_property( parse_csv_flags TARGET parse_csv PROPERTY COMPILE_FLAGS )
+set_target_properties( parse_csv PROPERTIES COMPILE_FLAGS "${parse_csv_flags} -O3 -DNDEBUG -g0 -march=native -std=c++11 -unroll-loops" )
 
 add_executable( main
     src/main.cpp
@@ -74,6 +80,7 @@ add_executable( main
     xgboost/src/tree/updater_sync.cc
     xgboost/src/tree/tree_model.cc
 )
+
 
 #target_link_libraries( main ${Boost_LIBRARIES} )
 target_link_libraries( main boost_program_options )

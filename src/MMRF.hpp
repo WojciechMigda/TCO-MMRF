@@ -25,11 +25,15 @@
 #ifndef MMRF_HPP_
 #define MMRF_HPP_
 
+#include "cpplinq.hpp"
+
 #include "num.hpp"
 #include "array2d.hpp"
 #include "param_store.hpp"
 
 #include "xgboost/c_api.h"
+
+#include "parse_csv.hpp"
 
 #include <string>
 #include <vector>
@@ -51,90 +55,6 @@ using size_type = std::size_t;
 
 constexpr float MISSING{NAN};
 constexpr float XGB_MISSING{NAN};
-
-
-std::vector<int>
-knn(
-    const array_type & _train_data,
-    const std::vector<float> & _train_y,
-    const array_type & _test_data,
-    const size_type N)
-{
-    const auto TR_NROWS = _train_data.shape().first;
-    const auto TE_NROWS = _test_data.shape().first;
-    const auto NCOLS = _train_data.shape().second;
-
-    array_type df = num::zeros<real_type>({TR_NROWS + TE_NROWS, _train_data.shape().second});
-
-    df[df.rows(0, TR_NROWS - 1)] = _train_data[_train_data.rows(0, TR_NROWS - 1)];
-    df[df.rows(TR_NROWS, TR_NROWS + TE_NROWS - 1)] = _test_data[_test_data.rows(0, TE_NROWS - 1)];
-
-    varray_type weights = {232, 133, 106, 89, 72, 63, 63, 55, 52, 50, 50, 42, 39, 30, 29, 26, 26, 26, 24, 24, 24, 23, 23, 23, 22, 22, 20, 18, 18, 18, 18, 18, 17, 16, 16, 16, 16, 16, 15, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    weights = weights / weights.sum();
-
-    for (size_type cix = 0; cix < NCOLS; ++cix)
-    {
-        varray_type col = df[df.column(cix)];
-        auto nan_mask = (col == col);
-        varray_type masked = col[nan_mask];
-
-        if (masked.size() == 0)
-        {
-            continue;
-        }
-
-        auto mean = masked.sum() / masked.size();
-        auto dev = std::sqrt(((masked - mean) * (masked - mean)).sum() / (masked.size() - 1));
-
-        if (dev == 0.)
-        {
-            continue;
-        }
-
-        df[df.column(cix)] = (col - mean) / dev;
-    }
-
-
-    std::vector<int> y_hat(TE_NROWS);
-    std::vector<int> y_train(TR_NROWS);
-    std::transform(_train_y.cbegin(), _train_y.cend(), y_train.begin(), [](const float x){ return std::lround(x);});
-
-    for (size_type teix = TR_NROWS; teix < (TR_NROWS + TE_NROWS); ++teix)
-    {
-        varray_type terow = df[df.row(teix)];
-        using d_ix_pair = std::pair<real_type, size_type>;
-        std::vector<d_ix_pair> distances(TR_NROWS);
-
-        for (size_type trix = 0; trix < TR_NROWS; ++trix)
-        {
-            varray_type trrow = df[df.row(trix)];
-
-            trrow -= terow;
-            trrow *= trrow;
-            trrow *= weights;
-            auto nan_mask = (trrow == trrow);
-            varray_type masked = trrow[nan_mask];
-            distances[trix] = {masked.sum() / masked.size(), trix};
-        }
-        std::sort(distances.begin(), distances.end(), [](d_ix_pair const & a, d_ix_pair const & b){ return a.first < b.first;});
-
-        // take closest match, or...
-        y_hat[teix - TR_NROWS] = y_train[distances[0].second];
-        for (size_type ix = 0; ix < N; ++ix)
-        {
-            auto yix = distances[ix].second;
-
-            if ((y_train[yix] % 2) == 0)
-            {
-                // ... overwrite it with one that progressed
-                y_hat[teix - TR_NROWS] = y_train[yix];
-                break;
-            }
-        }
-    }
-
-    return y_hat;
-}
 
 /*
  * Wrapper which returns DMatrixHandle directly and not through out param
@@ -494,38 +414,15 @@ run_rank_estimators(
             });
     }
 
-    // zip accumulated probabilities with rank indices
-    using zip_type = std::tuple<float, size_type, size_type>;
-    std::vector<zip_type> zipped;
-    for (size_type ix{0}; ix < y_hat_proba_cumm.size(); ++ix)
-    {
-        zipped.emplace_back(y_hat_proba_cumm[ix], ix, 0);
-    }
-    qsort(zipped.data(), zipped.size(), sizeof (zipped.front()),
-        [](const void * avp, const void * bvp)
-        {
-            auto ap = static_cast<const zip_type *>(avp);
-            auto bp = static_cast<const zip_type *>(bvp);
+    namespace q = ::cpplinq;
 
-            // descending order
-            //return (ap->first > bp->first) - (ap->first < bp->first);
-            // ascending order
-            return (std::get<0>(*ap) < std::get<0>(*bp)) - (std::get<0>(*ap) > std::get<0>(*bp));
-        });
-    for (size_type ix{0}; ix < y_hat_proba_cumm.size(); ++ix)
-    {
-        std::get<2>(zipped[ix]) = ix + 1;
-    }
-    std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<1>(a) < std::get<1>(b); });
-
-    // unzip index into y_hat
-    std::vector<size_type> y_hat(test_data.shape().first);
-
-    std::transform(zipped.cbegin(), zipped.cend(), y_hat.begin(),
-        [](const zip_type & p)
-        {
-            return std::get<2>(p);
-        });
+    auto y_hat = q::from(y_hat_proba_cumm)
+        >> q::zip_with(q::detail::int_range(0, INT_MAX))
+        >> q::orderby_descending([](std::pair<float, int> const & vi){ return vi.first; })
+        >> q::zip_with(q::detail::int_range(1, INT_MAX))
+        >> q::orderby_ascending([](std::pair<std::pair<float, int>, int> const & vii){ return vii.first.second; })
+        >> q::select([](std::pair<std::pair<float, int>, int> const & vii) -> size_type { return vii.second; })
+        >> q::to_vector();
 
     return y_hat;
 }
@@ -542,30 +439,36 @@ std::vector<int> MMRF::testingData(
     auto train_vstr = merge_chunks(std::move(m_expr_avg), std::move(m_expr_diff), std::move(m_mutation));
     auto test_vstr = merge_chunks(std::move(i_expr_avg), std::move(i_expr_diff), std::move(i_mutation));
 
+    namespace q = ::cpplinq;
+    size_type const NCOL = 1 + std::count(train_vstr.front().cbegin(), train_vstr.front().cend(), ',');
+    size_type const NROW_TR = train_vstr.size() - 1;
+    size_type const NROW_TS = test_vstr.size() - 1;
+    auto string_as_varray = [NCOL](std::string const & s)
+        {
+            varray_type row(NCOL);
+            parse_csv(s.data(), s.size(), &row[0]);
+            return row;
+        };
+    auto varray_reducer = [](array_type & seed, std::pair<varray_type, int> const & zipped)
+        {
+            seed[seed.row(zipped.second)] = zipped.first;
+            return seed;
+        };
+    auto i_train_data = q::from(train_vstr)
+        >> q::skip(1)
+        >> q::select(string_as_varray)
+        >> q::zip_with(q::detail::int_range(0, INT_MAX))
+        >> q::aggregate(array_type(num::shape_type(NROW_TR, NCOL), 0.f), varray_reducer)
+        ;
+    auto i_test_data = q::from(test_vstr)
+        >> q::skip(1)
+        >> q::select(string_as_varray)
+        >> q::zip_with(q::detail::int_range(0, INT_MAX))
+        >> q::aggregate(array_type(num::shape_type(NROW_TS, NCOL), 0.f), varray_reducer)
+        ;
+
+
     m_prog_obs_time.erase(m_prog_obs_time.begin());
-    train_vstr.erase(train_vstr.begin());
-    test_vstr.erase(test_vstr.begin());
-
-    using loadtxtCfg = num::loadtxtCfg<real_type>;
-    array_type i_train_data =
-        num::loadtxt(
-            std::move(train_vstr),
-            std::move(
-                num::loadtxtCfg<real_type>()
-                .delimiter(',')
-                .converters(loadtxtCfg::converters_type{{loadtxtCfg::GLOBAL_CONVERTER, maybe_real_xlt}})
-            )
-        );
-
-    array_type i_test_data =
-        num::loadtxt(
-            std::move(test_vstr),
-            std::move(
-                num::loadtxtCfg<real_type>()
-                .delimiter(',')
-                .converters(loadtxtCfg::converters_type{{loadtxtCfg::GLOBAL_CONVERTER, maybe_real_xlt}})
-            )
-        );
 
     std::cerr << "[MMRF] Train data shape " << i_train_data.shape() << std::endl;
     std::cerr << "[MMRF] Test data shape "<< i_test_data.shape() << std::endl;
@@ -599,24 +502,6 @@ std::vector<int> MMRF::testingData(
     array_type test_data = std::move(i_test_data);
 #endif
 
-//    auto _yhat = knn(train_data, train_y, test_data, 7);
-//    {
-//        using zip_type = std::tuple<int, size_type, size_type>;
-//        std::vector<zip_type> zipped(_yhat.size());
-//        for (size_type ix = 0; ix < _yhat.size(); ++ix)
-//        {
-//            zipped[ix] = std::make_tuple(_yhat[ix], ix, 0);
-//        }
-//        std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<0>(a) > std::get<0>(b); });
-//        for (size_type ix = 0; ix < _yhat.size(); ++ix)
-//        {
-//            std::get<2>(zipped[ix]) = ix + 1;
-//        }
-//        std::sort(zipped.begin(), zipped.end(), [](zip_type const & a, zip_type const & b){ return std::get<1>(a) < std::get<1>(b); });
-//        std::vector<int> ranks;
-//        std::transform(zipped.cbegin(), zipped.cend(), std::back_inserter(ranks), [](zip_type const & z) -> int { return std::get<2>(z); });
-//        return ranks;
-//    }
 
     const long int MAX_TIMES[] =
         {
