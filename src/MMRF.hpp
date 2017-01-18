@@ -268,6 +268,7 @@ int MMRF::trainingData(
     return 0;
 }
 
+
 std::vector<std::string>
 merge_chunks(std::vector<std::string> && avg, std::vector<std::string> && diff, std::vector<std::string> && mut)
 {
@@ -282,23 +283,6 @@ merge_chunks(std::vector<std::string> && avg, std::vector<std::string> && diff, 
 
     return vstr;
 }
-
-auto maybe_real_xlt = [](const char * str) -> real_type
-{
-    const auto SZ = strlen(str);
-
-    if (SZ == 0)
-    {
-        return MISSING;
-    }
-    else
-    {
-        return
-            (std::all_of(str, str + SZ, [](char c){ return std::isblank(c);})
-                ? MISSING
-                : strtod(str, nullptr));
-    }
-};
 
 
 std::vector<float> encode_response(std::vector<std::string> && vstr)
