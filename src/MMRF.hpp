@@ -433,22 +433,24 @@ std::vector<int> MMRF::testingData(
             parse_csv(s.data(), s.size(), &row[0]);
             return row;
         };
-    auto varray_reducer = [](array_type & seed, std::pair<varray_type, int> const & zipped)
+    auto varray_reducer = [](array_type * seed, std::pair<varray_type, int> const & zipped)
         {
-            seed[seed.row(zipped.second)] = zipped.first;
+            (*seed)[seed->row(zipped.second)] = zipped.first;
             return seed;
         };
-    auto i_train_data = q::from(train_vstr)
+    array_type i_train_data(num::shape_type(NROW_TR, NCOL), 0.f);
+    q::from(train_vstr)
         >> q::skip(1)
         >> q::select(string_as_varray)
         >> q::zip_with(q::detail::int_range(0, INT_MAX))
-        >> q::aggregate(array_type(num::shape_type(NROW_TR, NCOL), 0.f), varray_reducer)
+        >> q::aggregate(&i_train_data, varray_reducer)
         ;
-    auto i_test_data = q::from(test_vstr)
+    array_type i_test_data(num::shape_type(NROW_TS, NCOL), 0.f);
+    q::from(test_vstr)
         >> q::skip(1)
         >> q::select(string_as_varray)
         >> q::zip_with(q::detail::int_range(0, INT_MAX))
-        >> q::aggregate(array_type(num::shape_type(NROW_TS, NCOL), 0.f), varray_reducer)
+        >> q::aggregate(&i_test_data, varray_reducer)
         ;
 
 
